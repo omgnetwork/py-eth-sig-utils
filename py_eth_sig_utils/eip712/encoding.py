@@ -1,11 +1,14 @@
 from .. import utils
 from eth_abi import encode_single, encode_abi
+import re
+reg = re.compile('^\w*')
 
 def create_struct_definition(name, schema):
     schemaTypes = [ (schemaType['type'] + " " + schemaType['name']) for schemaType in schema ]
     return name + "(" + ",".join(schemaTypes) + ")"
 
 def find_dependencies(name, types, dependencies):
+    name = reg.match(name).group()
     if name in dependencies:
         return
     schema = types.get(name)
@@ -36,7 +39,7 @@ def encode_value(dataType, value, types):
         return encode_single('bytes32', utils.sha3(encode_data(dataType, value, types)))
     elif (dataType.endswith("]")):
         arrayType = dataType[:dataType.index("[")]
-        return encode_single('bytes32', utils.sha3(b"".join([ encode_data(arrayType, arrayValue, types) for arrayValue in value ])))
+        return encode_single('bytes32', utils.sha3(b"".join([ utils.sha3(encode_data(arrayType, arrayValue, types)) for arrayValue in value ])))
     else:
         return encode_single(dataType, value)
 
